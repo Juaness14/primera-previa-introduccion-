@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Juego 2D - #07 - Control de juego ganado</title>
+     <!-- 1. Se oculta el ratón
+    	 2. Se agregan vidas al jugador 
+    	 3. Ya no se utiliza "setInterval" -->
+    <style>* { padding: 0; margin: 0; } 
+    canvas { background:#229054; display: block; margin: 0 auto; }</style>
+</head>
+<body>
+
+<canvas id="miCanvas" width="580" height="420"></canvas>
+
+<script>
+    var canvas = document.getElementById("miCanvas");
+    var ctx = canvas.getContext("2d");
+  
+    var draw_time = 10;
+    var radioBola = 10;
+    var x = canvas.width/2;
+    var y = canvas.height-30;
+    var dx = 2;
+    var dy = -2;
+    var alturaPaleta = 10;
+    var anchuraPaleta = 100;
+
+    var paletaPosX = (canvas.width-anchuraPaleta)/2;
+    var flechaDerechaPresionada = false;
+    var flechaIzquierdaPresionada = false;
+
+    var nroFilasLadrillos = 5;
+    var nroColumnasLadrillos = 4;
+    var anchuraLadrillos = 80;
+    var alturaLadrillos = 30;
+    var espacioLadrillos = 25;
+    var vacioSuperiorLadrillo = 30;
+    var vacioIzquierdoLadrillo = 35;
+
+    var numeroCiclos = 5;
+   // ESTA INSTRUCCIÓN CONTROLA EL NÚMERO DE VIDAS DEL JUGADOR
+    // CUANDO LA INSTRUCCIÓN vidas DISMINUYE A CERO, EL JUGADOR PIERDE,
+    // PUESTO QUE HA PERDIDO TRES VECES
+    var vidas = 3;
+    // LA VARIABLE puntaje CONTROLA EL NÚMERO DE LADRILLOS QUE HAN SIDO
+    // IMPACTADOS POR LA BOLA. Cada vez que la bola golpee un ladrillo,
+    // la variable "puntaje" se incrementa en uno
+
+    // ESTA VARIABLE DEFINE UN COLOR
+    // Se pueden utilizar otros colores para los diferentes elementos del juego
+    var colorBola = "#76186F";
+    var colorPaleta = "#222d90";
+    var colorTexto = "#ff9933";
+    var puntaje = 0;
+    
+    // ESTA INSTRUCCIÓN OCULTA EL CURSOR DEL RATON (DENTRO DEL CANVAS)
+    canvas.style.cursor = 'none'
+    var ladrillos = [];
+    for(var c=0; c<nroColumnasLadrillos; c++) {
+        ladrillos[c] = [];
+        for(var f=0; f<nroFilasLadrillos; f++) {
+            ladrillos[c][f] = { x: 0, y: 0, estado: 11, ciclo: numeroCiclos };
+        }
+    }
+
+    document.addEventListener("keydown", manejadorTeclaPresionada, false);
+    document.addEventListener("keyup", manejadorTeclaLiberada, false);
+     // PARA DETECTAR EL MOVIMIENTO DEL RATÓN, SE COLOCA UN ESCUCHADOR (listener)
+    // AL EVENTO "mousemove"
+    document.addEventListener("mousemove", manejadorRaton, false);
+    function manejadorTeclaPresionada(e) {
+        if(e.keyCode == 39) {
+            flechaDerechaPresionada = true;
+        }
+        else if(e.keyCode == 37) {
+            flechaIzquierdaPresionada = true;
+        }
+    }
+    function manejadorTeclaLiberada(e) {
+        if(e.keyCode == 39) {
+            flechaDerechaPresionada = false;
+        }
+        else if(e.keyCode == 37) {
+            flechaIzquierdaPresionada = false;
+        }
+    }
+    // ESTE ES EL MANEJADOR DEL RATÓN
+    // ------------------------------
+    // La instrucción: "offsetLeft" calcula la distancia desde el borde izquierdo 
+    // de la pantalla hasta un componente html
+    // ------------------------------
+    // Por tanto, la instrucción: "canvas.offsetLeft" calcula el espacio a la izquierda
+    // del objeto CANVAS
+    // ------------------------------
+    // Dentro del manejador del ratón, la instrucción: "e.clientX" calcula la posición
+    // del ratón en la pantalla. Para calcular la posición del ratón DENTRO del CANVAS
+    // debemos RESTAR a la posición X del ratón, el valor izquierdo del CANVAS
+    // ------------------------------
+    // Es decir: "e.clientX - canvas.offsetLeft"
+    // ------------------------------
+    function manejadorRaton(e) {
+        var posXRatonDentroDeCanvas = e.clientX - canvas.offsetLeft;
+        // EL SIGUIENTE if DETERMINA SI LA POSICIÓN X DEL RATÓN ESTÁ
+        // DENTRO DEL CANVAS 
+        if(posXRatonDentroDeCanvas > 0 && posXRatonDentroDeCanvas < canvas.width) {
+            // SI LA RESPUESTA ES POSITIVA, EL RATÓN ESTÁ DENTRO DEL CANVAS
+            // EN ESTE CASO, SE RECALCULA LA POSICIÓN DE LA PALETA
+            // SU VALOR X ES AHORA LA POSICIÓN X DEL RATÓN
+            // ------------------------------------------------------------
+            // PERO DEBE RECORDARSE QUE LA PALETA TIENE UN ANCHO. ESTA ES LA RAZÓN
+            // POR LA CUAL SE DEBE RESTAR A LA POSICIPÓN X DE LA PALETA LA MITAD DEL 
+            // ANCHO DE LA PALETA
+            // ------------------------------------------------------------
+            // AL HACER ESTO, LA PALETA MODIFICA SU POSICIÓN CON BASE EN EL 
+            // MOVIMIENTO DEL RATÓN
+            paletaPosX = posXRatonDentroDeCanvas - anchuraPaleta/2;
+        }
+    }
+    function detectarColision() {
+        for(var c=0; c<nroColumnasLadrillos; c++) {
+            for(var f=0; f<nroFilasLadrillos; f++) {
+                var b = ladrillos[c][f];
+                if(b.estado == 11) {
+
+                    // LADRILLO NO HA RECIBIDO NINGÚN IMPACTO !!!!!!
+
+                    if(x > b.x && x < b.x+anchuraLadrillos && y > b.y && y < b.y+alturaLadrillos) {
+                        dy = -dy;
+                        b.estado = b.estado - 1;
+                        b.ciclo = b.ciclo - 1;
+                        puntaje++; // puntaje = puntaje + 1;
+                         if(puntaje == nroFilasLadrillos*nroColumnasLadrillos)
+
+                        if(puntaje == nroFilasLadrillos*nroColumnasLadrillos) {
+                            alert("USTED GANA! FELICITACIONES!!!");
+                            document.location.reload();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    function dibujarBola() {
+        ctx.beginPath();
+        ctx.arc(x, y, radioBola, 0, Math.PI*2);
+        ctx.fillStyle = colorBola;
+        ctx.fill();
+        ctx.closePath();
+    }
+    function dibujarPaleta() {
+        ctx.beginPath();
+        ctx.rect(paletaPosX, canvas.height-alturaPaleta, anchuraPaleta, alturaPaleta);
+        ctx.fillStyle = colorPaleta;
+        ctx.fill();
+        ctx.closePath();
+    }
+    function dibujarVidas() {
+        ctx.font = "24px Arial";
+        ctx.fillStyle = colorTexto;
+        // SE MUESTRA EL NÚMERO DE VIDAS DISPONIBLES
+        ctx.fillText("vidas: "+vidas, canvas.width-100, 20);
+    }
+    function dibujarLadrillos() {
+/* se cambio el color de los bloques y se aumento el estado en 1 ya que al llegar a cero no cambiaba
+por completo al color del fondo */
+
+        for(var c=0; c<nroColumnasLadrillos; c++) {
+            for(var r=0; r<nroFilasLadrillos; r++) {
+                if(ladrillos[c][r].estado > 0) {
+                    var b = ladrillos[c][r];
+                    var posXLadrillo = (r*(anchuraLadrillos+espacioLadrillos))+vacioIzquierdoLadrillo;
+                    var posYLadrillo = (c*(alturaLadrillos+espacioLadrillos))+vacioSuperiorLadrillo;
+                    if (b.estado < 11 && b.estado > 1) {
+                        b.ciclo = b.ciclo - 1;
+                        if (b.ciclo < 1) {
+                            if (b.estado > 1) {
+                                b.estado = b.estado - 1;
+                                b.ciclo = numeroCiclos;
+                            }
+                        }
+                    }
+                    ladrillos[c][r].x = posXLadrillo;
+                    ladrillos[c][r].y = posYLadrillo;
+                    ctx.beginPath();
+                    ctx.rect(posXLadrillo, posYLadrillo, anchuraLadrillos, alturaLadrillos);
+
+                    if (b.estado == 11) {
+                        ctx.fillStyle = "#c1f0d6";
+                    }
+                    else if (b.estado == 10) {
+                      ctx.fillStyle = "#acecc9";                       
+                    }
+                    else if (b.estado == 9) {
+                      ctx.fillStyle = "#98e7bb";                       
+                    }
+                    else if (b.estado == 8) {
+                      ctx.fillStyle = "#83e2ae";                       
+                    }
+                    else if (b.estado == 7) {
+                      ctx.fillStyle = "#6edda0";                       
+                    }
+                    else if (b.estado == 6) {
+                      ctx.fillStyle = "#5ad893";                       
+                    }
+                    else if (b.estado == 5) {
+                      ctx.fillStyle = "#45d385";                       
+                    }
+                    else if (b.estado == 4) {
+                      ctx.fillStyle = "#30cf78";                       
+                    }
+                    else if (b.estado == 3) {
+                      ctx.fillStyle = "#2cba6c";                       
+                    }
+                    else if (b.estado == 2) {
+                      ctx.fillStyle = "#27a560";                       
+                    }
+                    else {
+                      ctx.fillStyle = "#229054";
+                    }
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+    }
+    function dibujarPuntaje() {
+        ctx.font = "24px Arial";
+        ctx.fillStyle = colorTexto;
+        ctx.fillText("puntaje: "+puntaje, 40, 20);
+    }
+    function dibujar() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        dibujarLadrillos();
+        dibujarBola();
+        dibujarPaleta();
+        dibujarPuntaje();
+        dibujarVidas();
+        detectarColision();
+        if(x + dx > canvas.width-radioBola || x + dx < radioBola) {
+            dx = -dx;
+        }
+        if(y + dy < radioBola) {
+            dy = -dy;
+        }
+        else if(y + dy > canvas.height-radioBola) {
+            if(x > paletaPosX && x < paletaPosX + anchuraPaleta) {
+                dy = -dy;
+            }
+            else {
+            	// SI SE PRODUCE UN CONTACTO DE LA BOLA CON LA BASE DEL CANVAS
+            	// SE PIERDE UNA VIDA. PARA ELLO, LA INSTRUCCIÓN vidas--;
+            	// LO CUAL EQUIVALE A: vidas = vidas - 1
+                vidas--;
+                if(!vidas) {
+                	// SI vidas == 0 (lo cual también puede escribir: !vidas)
+                	// EL JUGADOR HA PERDIDO
+                    alert("PERDIÓ. PRESIONE ACEPTAR PARA REINICIAR");
+                    document.location.reload();
+                }
+                else if(vidas == 2) {
+                	// SI vidas > 0 (diferente de CERO) EL JUEGO CONTINUA
+                    x = canvas.width/2;
+                    y = canvas.height-30;
+                    dx = 3;
+                    dy = -3;
+                    paletaPosX = (canvas.width-anchuraPaleta)/2;
+                }
+                else if(vidas == 1) {
+                	// SI vidas > 0 (diferente de CERO) EL JUEGO CONTINUA
+                    x = canvas.width/2;
+                    y = canvas.height-30;
+                    dx = 4;
+                    dy = -4;
+                    paletaPosX = (canvas.width-anchuraPaleta)/2;
+                }
+            }
+        }
+
+        if(flechaDerechaPresionada && paletaPosX < canvas.width-anchuraPaleta) {
+            paletaPosX += 7;
+        }
+        else if(flechaIzquierdaPresionada && paletaPosX > 0) {
+            paletaPosX -= 7;
+        }
+
+        x += dx;
+        y += dy;
+    }
+    var juego = setInterval(dibujar, draw_time);
+</script>
+</body>
+</html>
